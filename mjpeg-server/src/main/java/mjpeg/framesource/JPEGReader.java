@@ -42,6 +42,9 @@ public class JPEGReader {
 						if (unsigned < 0xD0 || unsigned > 0xD7) {
 							if (unsigned == 0xD9) {
 								break mainLoop;
+							} else 
+							if (unsigned == 0xDA){
+								continue;
 							} else {
 								break;
 							}
