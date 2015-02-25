@@ -27,26 +27,26 @@ public class Server {
 	public static void main(String[] args) throws ParseException {
 		try {
 			Options options = new Options();
-			options.addOption("p", false, "server port");
+			options.addOption("p", true, "server port");
 			
 			CommandLineParser parser = new BasicParser();
 			CommandLine cmd = parser.parse( options, args);
 			
-			if (!cmd.hasOption("port")) {
+			if (!cmd.hasOption("p")) {
 				HelpFormatter formatter = new HelpFormatter();
 				formatter.printHelp( "zero-server.jar", options );
 				return;
 			}
 			
-			new Server().start();
+			new Server().start(Integer.parseInt(cmd.getOptionValue("p")));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void start() throws IOException {
+	private void start(int port) throws IOException {
 		BasicConfigurator.configure();
-		ServerSocket socket = new ServerSocket(83);
+		ServerSocket socket = new ServerSocket(port);
 		ExecutorService service = Executors.newFixedThreadPool(4);
 		
 		while (true) {
