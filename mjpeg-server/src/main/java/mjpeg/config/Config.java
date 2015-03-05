@@ -31,8 +31,15 @@ public class Config {
 	}
 
 	private static String readConfig() {
-		try {
-			Scanner sc = new Scanner(new File("config.json"));
+		try {			
+		    String fileName = "config.json";
+		    
+		    String define = System.getProperty("CONFIG");
+		    if (define != null) {
+		        fileName = define;
+		    }
+			
+            Scanner sc = new Scanner(new File(fileName));
 			String text = sc.useDelimiter("\\A").next();
 			sc.close();
 			

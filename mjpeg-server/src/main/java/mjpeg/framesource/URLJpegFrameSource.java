@@ -1,6 +1,5 @@
 package mjpeg.framesource;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -22,11 +21,15 @@ public class URLJpegFrameSource extends JPEGFrameSource {
 		}
 	}
 
-	private void setupConnection() throws IOException {
+	protected void setupConnection() throws IOException {
 		URL url = new URL(connectionString);
 		URLConnection conn = url.openConnection();
-		stream = new BufferedInputStream(conn.getInputStream());
+		stream = conn.getInputStream();
 	}
+	
+    public void setupConnection(URLConnection urlConnection) throws IOException {
+        stream = urlConnection.getInputStream();
+    }
 
 	@Override
 	public byte[] nextImage() throws IOException {

@@ -7,13 +7,57 @@ import java.io.InputStream;
 
 public class JPEGReader {
 	private ByteArrayOutputStream buffer;
+	private byte[] byteBuffer = new byte[1024 * 16];
 	
 	public JPEGReader() {
 		buffer = new ByteArrayOutputStream();
 	}
 
-	public byte[] next(InputStream is) throws IOException {
-		buffer.reset();
+	public byte[] next(InputStream is, int contentLength) throws IOException {
+	    buffer.reset();
+	    if (contentLength == -1) {
+	        return readUnknownLength(is);
+	    } else {
+	        return readKnownLength(is, contentLength);
+	    }
+	}
+
+	/**
+	 * Читает JPEG известного размера
+	 * @param is поток
+	 * @param contentLength длина
+	 * @return
+	 * @throws IOException
+	 * @throws EOFException
+	 */
+    private byte[] readKnownLength(InputStream is, int contentLength)
+            throws IOException, EOFException {
+
+        int count = 0, len = 0;
+        
+        while (count != contentLength) {
+            count += (len = is.read(byteBuffer, 0, Math.min(byteBuffer.length, contentLength - count)));
+            if (len == -1) {
+                throw new EOFException("Неожиданный конец файла");
+            }
+            
+            buffer.write(byteBuffer, 0, len);
+        }
+        
+        
+        return buffer.toByteArray();
+    }
+
+    /**
+     * Читает JPEG неизвестного размера
+     * @param is поток
+     * @param contentLength длина
+     * @return
+     * @throws IOException
+     * @throws EOFException
+     */
+    private byte[] readUnknownLength(InputStream is) throws IOException {
+        buffer.reset();
 		
 		// SOI marker
 		int soi = readUint(is);
@@ -59,7 +103,7 @@ public class JPEGReader {
 
 		byte[] data = buffer.toByteArray();
 		return data;
-	}
+    }
 
 	private void skip(InputStream fis, int length) throws IOException {
 		for (int i = 0; i != length; ++i) {

@@ -15,6 +15,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
@@ -33,7 +34,7 @@ public class Server {
 	private final static String BOUNDARY =  "boundary";
 	private AtomicLong connecitonCounter = new AtomicLong();
 	
-	private Map<String, byte[]> data = new HashMap<String, byte[]>();
+	private Map<String, byte[]> data = new ConcurrentHashMap<String, byte[]>();
 	
 	public static void main(String[] args) throws IOException {
 		BasicConfigurator.configure();
@@ -43,7 +44,7 @@ public class Server {
 	private void start() throws IOException {
 		Config config = Config.load();
 		
-		ServerSocket socket = new ServerSocket(config.getPort());
+		final ServerSocket socket = new ServerSocket(config.getPort());
 		ExecutorService pool = Executors.newFixedThreadPool(config.getWorkers());
 		
 		while (true) {
@@ -57,6 +58,7 @@ public class Server {
 						handleRequest(connection);
 					} catch (IOException e) {
 						logger.error(e);
+					} finally {
 					}
 				}
 			};
