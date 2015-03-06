@@ -121,7 +121,7 @@ public class JPEGReader {
 		int hi = fis.read();
 		int lo = fis.read();
 		
-		if (hi == -1 && lo == -1) {
+		if (hi == -1 || lo == -1) {
 			throw new EOFException("Unexpected EOF");
 		}
 		

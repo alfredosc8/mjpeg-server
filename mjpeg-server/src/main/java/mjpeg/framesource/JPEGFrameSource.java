@@ -1,6 +1,6 @@
 package mjpeg.framesource;
 
-import java.io.EOFException;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ public class JPEGFrameSource {
 
 	public JPEGFrameSource(InputStream is) {
 	    this();
-		this.stream = is;
+		this.stream = new BufferedInputStream(is);
 	}
 	
 	public JPEGFrameSource() {
@@ -38,15 +38,12 @@ public class JPEGFrameSource {
 	}
 
 	private void skipEmptyLine() throws IOException {
-		int cr = stream.read();
-		int lf = stream.read();
-		
-		if (cr == -1 || lf == -1) {
-		    throw new EOFException("Неожиданный конец файла");
-		}
-		
-        if (cr != '\r' || lf != '\n') {
-			throw new IOException("Ожидается CR LF");
+		while (true) {
+			stream.mark(2);
+			if (stream.read() != '\r' || stream.read() != '\n') {
+				stream.reset();
+				break;
+			}
 		}
 	}
 	

@@ -9,8 +9,13 @@ public class AdaptiveDelay {
 	}
 	
 	public void delay() throws InterruptedException {
-//		if (delay > 0) {
-			Thread.sleep(target);
-//		}
+		long now = System.currentTimeMillis();
+		long delay = target - (now - time);
+		
+		if (delay > 0) {
+			Thread.sleep(delay);
+		}
+		
+		time = System.currentTimeMillis();
 	}
 }
