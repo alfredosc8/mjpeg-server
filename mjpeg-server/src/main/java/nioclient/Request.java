@@ -5,15 +5,14 @@ import java.util.List;
 import java.util.Map;
 
 public class Request {
-
 	private String query;
-	public String getQuery() {
-		return query;
-	}
-
 	private Map<String, List<String>> headers;
 	private Map<String, String> params = new HashMap<String, String>();
 	private String resource;
+
+	public String getQuery() {
+		return query;
+	}
 	
 	public String getResource() {
 		return resource;
