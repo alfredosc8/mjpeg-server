@@ -1,4 +1,4 @@
-package nioclient;
+package nioserver;
 
 import java.util.HashMap;
 import java.util.List;

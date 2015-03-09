@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class JPEGFrameSource {
-	private ImprovedJPEGReader parser;
+	private JPEGReader parser;
 
 	public JPEGFrameSource(InputStream is) {
-		parser = new ImprovedJPEGReader(is);
+		parser = new JPEGReader(is);
 	}
 
 	public byte[] nextImage() throws IOException {

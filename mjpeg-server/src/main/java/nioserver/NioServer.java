@@ -1,4 +1,4 @@
-package nioclient;
+package nioserver;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,24 +15,48 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import mjpeg.config.Config;
-import nioclient.Worker.ChangeOp;
+import nioserver.Worker.ChangeOp;
+
+import org.apache.commons.cli.BasicParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 public class NioServer {
 	private Map<SocketChannel, Worker> workers = new HashMap<SocketChannel, Worker>();
 	private Selector socketSelector = null;
+	private final static Logger LOG = Logger.getLogger(NioServer.class);	
 	
-	public static void main(String[] args) throws InterruptedException {
-		new NioServer().start();
+	public static void main(String[] args) throws InterruptedException, ParseException {
+		PropertyConfigurator.configure("log4j.properties");
+		
+		CommandLineParser parser = new BasicParser();
+		Options options = new Options();
+		options.addOption(new Option("p", true, "port"));
+		CommandLine line = parser.parse(options, args);
+		
+		if (!line.hasOption("p")) {
+			HelpFormatter formatter = new HelpFormatter();
+			formatter.printHelp("java -jar nio-server.jar", options);
+			return;
+		}
+		
+		int port = Integer.parseInt(line.getOptionValue("p"));
+		new NioServer().start(port);
 	}
 
-	private void start() throws InterruptedException {
+	private void start(int port) throws InterruptedException {
 		try {
 			socketSelector = SelectorProvider.provider().openSelector();
 			ServerSocketChannel serverChannel = ServerSocketChannel.open();
 			serverChannel.configureBlocking(false);
 			
-			InetSocketAddress isa = new InetSocketAddress(Config.load().getPort());
+			InetSocketAddress isa = new InetSocketAddress(port);
 			serverChannel.socket().bind(isa);
 			serverChannel.register(socketSelector, SelectionKey.OP_ACCEPT);
 		} catch (IOException ex) {
@@ -110,6 +134,7 @@ public class NioServer {
 				} else 
 				if (status == ChangeOp.CLOSE) {
 					workers.remove(w);
+					key.cancel();
 					server.close();
 				}
 			} catch (IOException ex) {
@@ -151,11 +176,11 @@ public class NioServer {
 	}
 
 	private void logError(IOException e) {
-		e.printStackTrace();
+		LOG.error(e);
 	}
 
 	private void error(IOException ex) {
-		ex.printStackTrace();
+		LOG.error(ex);
 		System.exit(-1);
 	}
 

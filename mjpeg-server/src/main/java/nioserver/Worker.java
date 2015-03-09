@@ -1,4 +1,4 @@
-package nioclient;
+package nioserver;
 
 import java.io.EOFException;
 import java.io.FileInputStream;
