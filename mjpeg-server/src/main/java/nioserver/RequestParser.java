@@ -16,7 +16,6 @@ public class RequestParser {
 	
 	private State state = State.INIT;
 	private StringBuilder sb;
-	
 	private List<String> headers = new LinkedList<String>();
 	
 	public boolean feed(byte b) {

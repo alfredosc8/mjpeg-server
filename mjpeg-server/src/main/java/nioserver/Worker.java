@@ -18,10 +18,10 @@ public class Worker {
 	private static final Map<String, List<byte[]>> frameCache = 
 			new HashMap<String, List<byte[]>>();
 	
-	private SocketChannel server;
-	private ByteBuffer buffer = ByteBuffer.allocate(100);
-	private RequestParser p = new RequestParser();
 	private State state = State.READ_HEADER;
+	private SocketChannel server;
+	private ByteBuffer readBuffer = ByteBuffer.allocate(100);
+	private RequestParser p = new RequestParser();
 	private ByteBuffer frameBuffer;
 	private Iterator<byte[]> it;
 	private String filename;
@@ -37,7 +37,7 @@ public class Worker {
 	private enum State {
 		READ_HEADER,
 		WRITE_HEADER,
-		WRITE
+		WRITE_BODY
 	}
 	
 	public Worker(SocketChannel server) {
@@ -45,13 +45,13 @@ public class Worker {
 	}
 	
 	public ChangeOp read() throws IOException {
-		buffer.clear();					
+		readBuffer.clear();					
 		
 		int c;
-		while ((c = server.read(buffer)) > 0) {
-			buffer.flip();
+		while ((c = server.read(readBuffer)) > 0) {
+			readBuffer.flip();
 			for (int i = 0; i < c; ++i) {
-				if (!p.feed(buffer.get(i))) {
+				if (!p.feed(readBuffer.get(i))) {
 					Request request = p.getRequest();
 					filename = "." + request.getResource();
 					fps = request.getParam("fps");
@@ -61,7 +61,7 @@ public class Worker {
 					return ChangeOp.WRITE;
 				}
 			}
-			buffer.clear();
+			readBuffer.clear();
 		}
 		
 		if (c == -1) {
@@ -98,12 +98,12 @@ public class Worker {
 				"Content-type: multipart/x-mixed-replace; boundary=\"myboundary\"\r\n" +
 				"\r\n";
 			
-			buffer.clear();
-			buffer.put(message.getBytes());
-			buffer.flip();
-			server.write(buffer);
+			readBuffer.clear();
+			readBuffer.put(message.getBytes());
+			readBuffer.flip();
+			server.write(readBuffer);
 			
-			state = State.WRITE;
+			state = State.WRITE_BODY;
 		} else {
 			if (frameBuffer == null || !frameBuffer.hasRemaining()) {
 				if (!it.hasNext()) {
@@ -121,6 +121,7 @@ public class Worker {
 				
 				frameBuffer.put("--myboundary\r\n".getBytes());
 				frameBuffer.put("Content-Type: image/jpeg\r\n".getBytes());
+				frameBuffer.put(("Content-Length: " + image.length + "\r\n").getBytes());
 				frameBuffer.put("\r\n".getBytes());
 				
 				frameBuffer.put(image);
@@ -131,7 +132,7 @@ public class Worker {
 			server.write(frameBuffer);
 			
 			if (!frameBuffer.hasRemaining()) {
-				if (fps != null) {
+				if (fps != null && !fps.equals("0")) {
 					timeWait = System.currentTimeMillis() + (long) (1000.0f / Float.valueOf(fps));
 				}
 			}
