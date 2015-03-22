@@ -1,5 +1,6 @@
 package nioserver;
 
+import java.io.BufferedInputStream;
 import java.io.EOFException;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -74,10 +75,11 @@ public class Worker {
 	private synchronized void prepareWrite() throws IOException {
 		if (!frameCache.containsKey(filename)) {
 			FileInputStream fis = new FileInputStream(filename);
-			JPEGFrameSource frameSource = new JPEGFrameSource(fis);
+			JPEGFrameSource frameSource = new JPEGFrameSource(new BufferedInputStream(fis, 1024 * 64));
 			
 			List<byte[]> images = new ArrayList<byte[]>();
 			try {
+				int i = 0;
 				while (true) {
 					images.add(frameSource.nextImage());
 				}

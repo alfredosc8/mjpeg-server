@@ -1,75 +1,50 @@
 package mjpeg.framesource;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.Arrays;
 
-public class JPEGReader {
-	private byte[] separator;
-	private DataInputStream dis;
-	
-	private int separatorPos = 0;
-	private byte prev = 0;
+import parser.AbstractParser;
+
+public class JPEGReader extends AbstractParser {
 	private boolean soi = false;
-	
-	private ByteArrayOutputStream bos;
-	private StringBuilder separatorBuilder;
+	private byte prev = 0;
+	private byte[] buffer = new byte[16 * 1024];
+	private int pos;
 	
 	private byte[] frame;
 	
-	public JPEGReader(InputStream is) {
-		this.dis = new DataInputStream(new BufferedInputStream(is, 0x1024));
-		this.separatorBuilder = new StringBuilder();
-		this.bos = new ByteArrayOutputStream();
-	}
-
-	private boolean feed(byte b) {
-		boolean frameReady = false;
-		
-		if (separator == null) {
-			char ch = (char) (b & 0xFF);
-			
-			if (ch != '\r' && ch != '\n') {
-				separatorBuilder.append(ch);
-			} else
-			if (ch == '\n') {
-				separator = separatorBuilder.toString().getBytes();
+	@Override
+	public boolean feed(byte b) {
+		if (soi) {
+			if (prev == (byte) 0xFF && b == (byte) 0xD9) {
+				appendByte((byte) 0xFF);
+				appendByte((byte) 0xD9);
+				
+				processChunk(Arrays.copyOf(buffer, pos-1));
+				reset();
+				
+				return true;
+			} else {
+				appendByte(b);
 			}
 		} else {
-			if (!soi && prev == (byte) 0xFF && b == (byte) 0xD8) {
+			if (prev == (byte) 0xFF && b == (byte) 0xD8) {
 				soi = true;
-				bos.write(prev);
-			}
-			if (b == separator[separatorPos]) {
-				if (separatorPos < separator.length - 1) {
-					separatorPos++;
-				} else {
-					if (soi) {
-						processChunk(bos.toByteArray());
-						reset();
-						
-						frameReady = true;
-					}
-				}
-			} else {
-				if (separatorPos > 0) {
-					if (soi) {
-						bos.write(separator, 0, separatorPos);
-					}
-					
-					separatorPos = 0;
-				}
-				
-				if (soi) {
-					bos.write(b);
-				}
+				appendByte((byte) 0xFF);
+				appendByte((byte) 0xD8);
 			}
 		}
 		
 		prev = b;
-		return frameReady;
+		return false;
+	}
+
+	private void appendByte(byte b) {
+		if (pos == buffer.length - 1) {
+			buffer = Arrays.copyOf(buffer, buffer.length << 1);
+		}
+		
+		buffer[pos++] = b;
 	}
 
 	private void processChunk(byte[] byteArray) {
@@ -79,16 +54,10 @@ public class JPEGReader {
 	private void reset() {
 		soi = false;
 		prev = 0;
-		separatorPos = 0;
-		bos.reset();
+		pos = 0;
 	}
 
-	public byte[] next() throws IOException {
-		while (!feed(dis.readByte())) {
-			//
-		}
-		
-		
+	public byte[] getData() throws IOException {
 		return frame;
 	}
 }
