@@ -13,36 +13,22 @@ import mjpeg.framesource.JPEGReader;
 
 import com.google.common.io.ByteStreams;
 
-import counters.SimpleCounter;
-
 public class Unpacker {
-	public static void main(String[] args) throws IOException {
-		new Unpacker().start();
-	}
-
-	private void start() throws IOException {
+	public void start(String ifile) throws IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		FileInputStream is = new FileInputStream("video/video7.cgi");
+		FileInputStream is = new FileInputStream(ifile);
 		ByteStreams.copy(is, bos);
 
 		ByteBuffer buffer = ByteBuffer.wrap(bos.toByteArray());
-
 		JPEGReader reader = new JPEGReader();
-		SimpleCounter counter = new SimpleCounter();
-
-		counter.begin();
 
 		int i = 0;
 		while (reader.feed(buffer)) {
 			byte[] image = reader.getData();
 			ImageIO.read(new ByteArrayInputStream(image));
-			FileOutputStream fos = new FileOutputStream(String.format("data/%05d.jpeg", i++));
+			FileOutputStream fos = new FileOutputStream(String.format("./%06d.jpeg", i++));
 			fos.write(image);
 			fos.close();
-			counter.tick();
 		}
-		
-		counter.end();
-		counter.print();
 	}
 }

@@ -69,7 +69,7 @@
 		            <manifest>
 		                <addClasspath>true</addClasspath>
 		                <classpathPrefix>lib/</classpathPrefix>
-		                <mainClass>nioserver.NioServer</mainClass>
+		                <mainClass>nioserver.EntryPoint</mainClass>
 		            </manifest>
 		        </archive>
 		    </configuration>

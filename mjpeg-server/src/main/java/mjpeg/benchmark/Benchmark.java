@@ -15,12 +15,8 @@ import counters.SimpleCounter;
 public class Benchmark {
 	private ByteBuffer buffer;
 
-	public static void main(String[] args) throws IOException {
-		new Benchmark().start();
-	}
-
-	private void start() throws FileNotFoundException, IOException {
-		prepare();
+	public void start(String path) throws FileNotFoundException, IOException {
+		prepare(path);
 		startDummyBench();
 		
 		for (int i = 1; i < 4; ++i) {
@@ -30,13 +26,13 @@ public class Benchmark {
 	}
 
 	private void startDummyBench() throws FileNotFoundException, IOException {
-		SimpleCounter counter = new SimpleCounter();
+		SimpleCounter counter = new SimpleCounter("dummy");
 		
 		counter.begin();
 		counter.tick();
 		
 		while (buffer.hasRemaining()) {
-			int c = buffer.get();
+			buffer.get();
 		}
 		
 		counter.end();
@@ -46,7 +42,7 @@ public class Benchmark {
 	private void startReaderBench() throws IOException {
 		JPEGReader reader = new JPEGReader();
 
-		SimpleCounter counter = new SimpleCounter();
+		SimpleCounter counter = new SimpleCounter("JPEGReader");
 		counter.begin();
 
 		while (reader.feed(buffer)) {
@@ -58,9 +54,9 @@ public class Benchmark {
 		counter.print();
 	}
 
-	private void prepare() throws FileNotFoundException, IOException {
+	private void prepare(String path) throws FileNotFoundException, IOException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		FileInputStream is = new FileInputStream("video/video.cgi");
+		FileInputStream is = new FileInputStream(path);
 		ByteStreams.copy(is, bos);
 		
 		buffer = ByteBuffer.wrap(bos.toByteArray());

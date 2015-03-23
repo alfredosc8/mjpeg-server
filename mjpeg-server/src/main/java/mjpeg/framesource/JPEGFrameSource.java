@@ -19,7 +19,6 @@ public class JPEGFrameSource {
 			if (c == -1) {
 				throw new EOFException();
 			}
-			
 		
 			if (parser.feed((byte) c)) {
 				return parser.getData();
