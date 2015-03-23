@@ -20,7 +20,7 @@ public class JPEGReader extends AbstractParser {
 				appendByte((byte) 0xFF);
 				appendByte((byte) 0xD9);
 				
-				processChunk(Arrays.copyOf(buffer, pos-1));
+				processChunk(Arrays.copyOf(buffer, pos));
 				reset();
 				
 				return true;
