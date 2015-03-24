@@ -7,7 +7,8 @@ import parser.AbstractParser;
 
 public class JPEGReader extends AbstractParser {
 	private boolean soi = false;
-	private byte prev = 0;
+	private boolean prev;
+	
 	private byte[] buffer = new byte[16 * 1024];
 	private int pos;
 	
@@ -16,26 +17,29 @@ public class JPEGReader extends AbstractParser {
 	@Override
 	public boolean feed(byte b) {
 		if (soi) {
-			if (prev == (byte) 0xFF && b == (byte) 0xD9) {
-				appendByte((byte) 0xFF);
-				appendByte((byte) 0xD9);
-				
-				processChunk(Arrays.copyOf(buffer, pos));
-				reset();
-				
-				return true;
-			} else {
-				appendByte(b);
-			}
-		} else {
-			if (prev == (byte) 0xFF && b == (byte) 0xD8) {
-				soi = true;
-				appendByte((byte) 0xFF);
-				appendByte((byte) 0xD8);
-			}
+			appendByte(b);
 		}
 		
-		prev = b;
+		if (prev) {
+			if (soi) {
+				if (b == (byte) 0xD9) {
+					processChunk(Arrays.copyOf(buffer, pos));
+					reset();
+
+					return true;
+				}
+			} else {
+				if (b == (byte) 0xD8) {
+					soi = true;
+					appendByte((byte) 0xFF);
+					appendByte((byte) 0xD8);
+				}
+			}
+
+		}
+		
+		
+		prev = b == (byte) 0xFF;
 		return false;
 	}
 
@@ -53,7 +57,7 @@ public class JPEGReader extends AbstractParser {
 
 	private void reset() {
 		soi = false;
-		prev = 0;
+		prev = false;
 		pos = 0;
 	}
 
